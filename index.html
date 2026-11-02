@@ -311,7 +311,11 @@ sheet.onclick = e => { if (e.target === sheet) sheet.classList.remove("open"); }
 $("npd").onchange = () => { store.set.perDay = +$("npd").value; save(); };
 $("auto").onclick = () => { store.set.auto = !store.set.auto; $("auto").classList.toggle("on", store.set.auto); save(); };
 $("export").onclick = () => {
-  const blob = new Blob([JSON.stringify(store)], {type:"application/json"});
+  const words = Object.keys(store.cards).map(id => {
+    const c = BYID[id], s = store.cards[id];
+    return {id:+id, w:c.w, pos:c.pos, ru:c.ru, box:s.box, n:s.n, lapses:s.lapses||0};
+  });
+  const blob = new Blob([JSON.stringify(Object.assign({}, store, {words}))], {type:"application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   a.download = "english850-progress.json"; document.body.appendChild(a); a.click(); a.remove();
 };
@@ -324,6 +328,7 @@ $("file").onchange = () => {
       const d = JSON.parse(r.result);
       if (!d || typeof d.cards !== "object") throw 0;
       store = d; store.set = Object.assign({perDay:10, auto:false}, store.set);
+      delete store.words;
       if (store.day !== todayStr()) { store.day = todayStr(); store.newToday = 0; }
       save(); buildDaily(); render(); sheet.classList.remove("open");
     } catch(e) { alert("Не получилось прочитать файл."); }
